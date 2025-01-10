@@ -463,6 +463,9 @@
         <mxCell id="17UivyfSJFZXzVtU6ymj-4" value="" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws3.certificate;fillColor=#5294CF;gradientColor=none;" vertex="1" parent="1">
           <mxGeometry x="630" y="390" width="40" height="50" as="geometry" />
         </mxCell>
+        <mxCell id="17UivyfSJFZXzVtU6ymj-5" value="NW: Outboud Traffice Response: 100KB * 10000 Connection per day&lt;br&gt;Storage: 100 B * 10000 Records per day" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="750" y="1330" width="460" height="230" as="geometry" />
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
