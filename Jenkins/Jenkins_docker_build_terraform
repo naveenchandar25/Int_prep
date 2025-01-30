@@ -1,0 +1,73 @@
+
+pipeline {
+    agent any
+	
+	tools {
+        maven 'Maven'
+    }
+	
+    environment {
+        SONAR_HOST_URL = 'http://naveen-sonarqube-server-url'
+        SONAR_AUTH_TOKEN = credentials('naveen-sonarqube-token-id')
+	    TERRAFORM_VERSION = '1.4'
+    }
+    stages {
+        stage('Git Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/naveenchandar25/Int_prep.git'
+            }
+        }
+		stage('Build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('your-sonarqube-environment-name') {
+                    sh 'mvn sonar:sonar -Dsonar.projectKey=your_project_key -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_AUTH_TOKEN'
+                }
+            }
+        }
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+        stage('Terraform Lint') {
+            steps {
+                sh 'tflint --init'
+                sh 'tflint'
+            }
+        }
+        stage('Terraform Validate') {
+            steps {
+                sh 'terraform init'
+                sh 'terraform validate'
+            }
+        }
+		stage('Terraform Plan') {
+            steps {
+                sh 'terraform plan -out=tfplan'
+            }
+        }
+        stage('Terraform Apply') {
+            steps {
+                input message: 'Apply Terraform plan?', ok: 'Apply'
+                sh 'terraform apply tfplan'
+            }
+        }
+    }
+    post {
+        always {
+            script {
+                def log = currentBuild.rawBuild.getLog(100).join('\n')
+                mail to: 'Secret team DL'
+                     subject: "Deployment Logs for Build ${currentBuild.fullDisplayName}",
+                     body: "Here are the deployment logs:\n\n${log}"
+            }
+        }
+    }       
+}

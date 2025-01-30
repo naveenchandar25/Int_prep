@@ -1,0 +1,101 @@
+
+pipeline {
+    agent any
+	
+	tools {
+        maven 'Maven'
+    }
+	
+    environment {
+        SONAR_HOST_URL = 'http://naveen-sonarqube-server-url'
+        SONAR_AUTH_TOKEN = credentials('naveen-sonarqube-token-id')
+	    PYTHON_ENV = 'python3' 
+    }
+    stages {
+        stage('Git Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/naveenchandar25/Int_prep.git'
+            }
+        }
+		stage('Build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('your-sonarqube-environment-name') {
+                    sh 'mvn sonar:sonar -Dsonar.projectKey=your_project_key -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_AUTH_TOKEN'
+                }
+            }
+        }
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+        stage(name: 'Setup Environment') {
+            steps {
+                sh 'python3 -m venv venv'
+                sh 'source venv/bin/activate'
+                sh 'pip install -r requirements.txt'
+            }
+
+        }
+        stage(name: 'Run Tests') {
+            steps {
+                sh 'pytest tests/'
+            }
+        }
+		stage('Docker Build') {
+            steps {
+                sh "make image"
+            }
+        }
+        stage('Docker Push') {
+            steps {
+                script{
+                    withDockerRegistry(credentialsId: 'your-docker-credentials-id', toolName: 'docker') {
+                        sh "make push"
+                    }
+                }
+            }
+        }
+        stage('Docker deploy') {
+            steps {
+                script{
+                    withDockerRegistry(credentialsId: '*****-e813-4ff0-b386-*******', toolName: 'docker') {
+                         sh "docker images"        
+                         sh "docker run -d -it --rm -p 5000:5000 naveenchandar25/python-secret-sharing:latest"
+
+                    }
+                }
+            }
+        }
+        stage('Final Health Check') {
+            steps {
+                script {
+                    def response = sh(script: 'curl -s -o /dev/null -w "%{http_code}" http://secret-sharing-url', returnStdout: true).trim()
+                    if (response == '200') {
+                        echo 'Site works as expected'
+                    } else {
+                        error 'You need to Rework!'
+                    }
+                }
+            }
+        }
+    
+    post {
+        always {
+            script {
+                // Stop and remove the container
+                sh 'docker stop $CONTAINER_NAME'
+                sh 'docker rm $CONTAINER_NAME'
+                // Optionally, remove the Docker image
+                sh 'docker rmi $DOCKER_IMAGE'
+            }
+        }
+    }       
+}

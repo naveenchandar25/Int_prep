@@ -1,0 +1,41 @@
+High Level Problem Statement:
+
+There is a requirement for an internal secret-sharing tool for a group of 50,000 employees. 
+The tool should address three main use cases: a web interface, a CLI interface, and an API interface.
+Additionally, it should be designed with future enhancements in mind, such as IDE extensions.
+
+Must to Include in the Platform Design:
+ - The Site/Application/Tool Should be accessinle for the Sepcific Internal IP Range (Assuming it should be accessible for employess within the company)
+   * Do we need a Firewall ??
+
+ - The Data at Rest and Data at Transit should be Encrypted at all the Stages.
+ - The tool should be able to handle a load of up to 1000 active secrets at any given time.
+ - Recovery Time Objective should be Very high.
+ - Recovery Point Objective can be Low. ***
+ - You do not need integrations with any IdP for login, and the tool can provide anonymous access.
+   Assumnption: 
+    - Application is hosted in cloud and authentication is mandate to access any resource in cloud. 
+ 
+ Tools Expected behavior: 
+	Task 1: (Secret Owner): PUT OR POST API CALL ** || UPDATE 
+	- It Should be able to Generate a Secret. 
+	- It Should Return a Unique path and a PIN. 
+	- It should allow generation of multiple distinct urls and corresponding pins.
+	
+	Task 2: (Secret Receiver) GET API CALL ** || SELECT 
+	- It Should receive Unique path and PIN. 
+	- Validate the PIN. 
+	- It Should Return the Secret. 
+	
+	Conditions: 
+	- The URLs should not be easy to guess.
+	- Secrets should only be one-time accessible and expire.
+	- Allow 3 attempts for a PIN.  
+	- Secrets should expire after 24 hours.
+	- The secret can only be text. 
+	- Text length should be of less than 1KB and a maximum length of 100KB. 
+	- Users can be advised to base64-encode other formats for sharing as text, and to be decoded locally by the recipient.
+	
+	Warning&Info: 
+	- User should be advised to share the url and the pin through separate mediums with the intended recipient.
+	- Users can be advised to use the url/pin to access their own secrets if they wish for it to expire.
