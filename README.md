@@ -1,4 +1,4 @@
-# ES_PREP
+# ERICS_PREP
 
 This repository contains three folders:
 
